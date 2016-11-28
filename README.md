@@ -7,3 +7,4 @@ Visualized the fft from the microphone on my webcam over 300 neopixels.
 
 Starting with the lower frequencies, going up (in a log-ish mannor) to higher frequencies, low db=blue going to green, then red.
 
+Video of the pixels on my christmas tree: https://www.youtube.com/watch?v=PyBxUqtKxwA
