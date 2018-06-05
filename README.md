@@ -27,7 +27,7 @@ sudo python ./xmas.py
 5. Submit a pull request :D
 
 ## Demo
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/PyBxUqtKxwA/0.jpg)](https://www.youtube.com/watch?v=PyBxUqtKxwA)
+[![Demo video](https://img.youtube.com/vi/PyBxUqtKxwA/0.jpg)](https://www.youtube.com/watch?v=PyBxUqtKxwA)
 
 ## History
 
