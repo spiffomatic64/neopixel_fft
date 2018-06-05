@@ -33,7 +33,3 @@ sudo python ./xmas.py
 ## Credits
 
 SWHarden.com
-
-## License
-
-TODO: Write license
