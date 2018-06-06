@@ -91,9 +91,6 @@ def run_fft():
             if has_pixels:
                 strip.setPixelColor(led, pixel_wheel(leds[led]))
             else:
-                # r, g, b = rgb_wheel(leds[led])
-                # print('#{:02d}{:02d}{:02d} '.format(r,g,b), end='')
-                # boxes[led].bg = rgb_wheel(leds[led])
                 screen.fill(rgb_wheel(leds[led]), boxes[led])
         # print('')
         if has_pixels:
