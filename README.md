@@ -4,7 +4,7 @@ Neopixel visualizer for audio FFT signal
 
 Using the example from: http://www.swharden.com/wp/2013-05-09-realtime-fft-audio-visualization-with-python/
 
-Visualized the fft from the microphone on my webcam over 300 neopixels. 
+Visualized the fft from the microphone on my webcam over 300 neopixels.
 
 Starting with the lower frequencies, going up (in a log-ish mannor) to higher frequencies, low db=blue going to green, then red.
 
@@ -12,7 +12,10 @@ Starting with the lower frequencies, going up (in a log-ish mannor) to higher fr
 
 Follow raspberrypi neopixel guide here: https://learn.adafruit.com/neopixels-on-raspberry-pi/software
 
-sudo apt-get install python-matplotlib python-numpy python-scipy python-pyaudio 
+sudo apt-get install python-matplotlib python-numpy python-scipy python-pyaudio
+
+brew install portaudio
+sudo apt-get install python3-numpy python3-pyaudio
 
 ## Usage
 
@@ -20,13 +23,14 @@ sudo python ./xmas.py
 
 ## Contributing
 
-1. Fork it!
-2. Create your feature branch: `git checkout -b my-new-feature`
-3. Commit your changes: `git commit -am 'Add some feature'`
-4. Push to the branch: `git push origin my-new-feature`
-5. Submit a pull request :D
+1.  Fork it!
+2.  Create your feature branch: `git checkout -b my-new-feature`
+3.  Commit your changes: `git commit -am 'Add some feature'`
+4.  Push to the branch: `git push origin my-new-feature`
+5.  Submit a pull request :D
 
 ## Demo
+
 [![Demo video](https://img.youtube.com/vi/PyBxUqtKxwA/0.jpg)](https://www.youtube.com/watch?v=PyBxUqtKxwA)
 
 ## History
