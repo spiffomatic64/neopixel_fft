@@ -3,6 +3,7 @@
 import sys
 from recorder import SwhRecorder
 import signal
+import math
 
 try:
     from neopixel import Adafruit_NeoPixel, Color
@@ -57,6 +58,8 @@ def rgb_wheel(pos):
 
 def shutdown():
     SR.close()
+    if not has_pixels:
+        pygame.quit()
     sys.exit(0)
 
 
@@ -77,29 +80,23 @@ def run_fft():
                     shutdown()
 
         xs, ys = SR.fft(trimBy=False)
-        # print("{},{}".format(xs.size, ys.size))
 
         for led in range(LED_COUNT):
-            led_num = int(led * (led / 100.0))
-            # print(led_num)
-            db = int(ys[led_num] / (20 - (led / 15)))
-            if db > leds[led]:
+            # 15 -> 315 is the frequency range for most music (deep bass should probably remove the +15)
+            led_num = int(led * (300 / LED_COUNT)) + 15
+            db = int(ys[led_num] / (20 - (led / (LED_COUNT / 20)) + 1))
+            if db > leds[led]:  # jump up fast
                 leds[led] = db
-            else:
+            else:  # fade slowly
                 leds[led] = int((leds[led] * 4 + db) / 5)
-            # print(db)
             if has_pixels:
                 strip.setPixelColor(led, pixel_wheel(leds[led]))
             else:
                 screen.fill(rgb_wheel(leds[led]), boxes[led])
-        # print('')
         if has_pixels:
             strip.show()
         else:
             pygame.display.update()
-        # print("")
-
-        # print(min(ys), max(ys))
 
 
 if __name__ == "__main__":
@@ -117,14 +114,15 @@ if __name__ == "__main__":
         run_fft()
     else:
         pygame.init()
-        screen = pygame.display.set_mode((500, 800))
+        size = 20
+        width = int(math.sqrt(LED_COUNT))
+        screen = pygame.display.set_mode((size * width, size * (width + 1)))
         boxes = []
-        size = 10
         for led in range(LED_COUNT):
-            y = int(led / 8) * size
-            x = led % 8 * size
-            box = pygame.Rect(x, y, x + size, y + size)
-            color = int((led / 8) * 255 / (LED_COUNT / 8))
+            y = int(led / width) * size
+            x = led % width * size
+            box = pygame.Rect(x, y, size, size)
+            color = int((led * 255.) / LED_COUNT)
             screen.fill((color, color, color), box)
             boxes.append(box)
         pygame.display.update()
