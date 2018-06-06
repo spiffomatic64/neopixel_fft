@@ -4,6 +4,7 @@ import sys
 from recorder import SwhRecorder
 import signal
 import math
+import time
 
 try:
     from neopixel import Adafruit_NeoPixel, Color
@@ -20,6 +21,13 @@ LED_FREQ_HZ    = 800000  # LED signal frequency in hertz (usually 800khz)
 LED_DMA        = 5       # DMA channel to use for generating signal (try 5)
 LED_BRIGHTNESS = 25     # Set to 0 for darkest and 255 for brightest
 LED_INVERT     = False   # True to invert the signal (when using NPN transistor level shift)
+
+# visualization methods: 'frequency_color', 'simple_frequency_amplitude', 'color_change_frequency_amplitude'
+VISUALIZATION_METHOD = 'color_change_frequency_amplitude'
+SIMPLE_FREQUENCY_AMPLITUDE_COLOR = (255, 255, 255)
+MAX_DB = 1020
+color_change_frequency_amplitude_time = 0
+start_time = time.time()
 
 
 def pixel_wheel(pos):
@@ -56,22 +64,59 @@ def rgb_wheel(pos):
         return (255, 0, 0)
 
 
-def shutdown():
-    SR.close()
-    if not has_pixels:
-        pygame.quit()
-    sys.exit(0)
+def write_pixel(index, rgb_color):
+    if has_pixels:
+        strip.setPixelColor(index, *rgb_color)
+    else:
+        screen.fill(rgb_color, boxes[index])
 
 
-def signal_handler(signal, frame):
-    print('You pressed Ctrl+C!')
-    shutdown()
+def display_frequency_color(dbs):
+    for led in range(LED_COUNT):
+        rgb_color = rgb_wheel(dbs[led])
+        write_pixel(led, rgb_color)
+
+
+def display_simple_frequency_amplitude(dbs):
+    for led in range(LED_COUNT):
+        rgb_color = [min(int(color * dbs[led] / MAX_DB), 255) for color in SIMPLE_FREQUENCY_AMPLITUDE_COLOR]
+        write_pixel(led, rgb_color)
+
+
+def display_color_change_frequency_amplitude(dbs):
+    global color_change_frequency_amplitude_time
+
+    color_change_frequency_amplitude_time = int((time.time() - start_time) * 45)  # rotate colors in 8 seconds
+    color_change_frequency_amplitude_color = (
+        int((math.sin(math.radians(color_change_frequency_amplitude_time)) + 1) * 127.5),
+        int((math.sin(math.radians(color_change_frequency_amplitude_time + 90)) + 1) * 127.5),
+        int((math.sin(math.radians(color_change_frequency_amplitude_time + 180)) + 1) * 127.5))
+
+    for led in range(LED_COUNT):
+        rgb_color = [min(int(color * dbs[led] / MAX_DB), 255) for color in color_change_frequency_amplitude_color]
+        write_pixel(led, rgb_color)
+
+
+def display_fft(dbs):
+    if VISUALIZATION_METHOD == 'frequency_color':
+        display_frequency_color(dbs)
+    elif VISUALIZATION_METHOD == 'simple_frequency_amplitude':
+        display_simple_frequency_amplitude(dbs)
+    elif VISUALIZATION_METHOD == 'color_change_frequency_amplitude':
+        display_color_change_frequency_amplitude(dbs)
+    else:
+        display_frequency_color(dbs)
+
+    if has_pixels:
+        strip.show()
+    else:
+        pygame.display.update()
 
 
 def run_fft():
-    leds = []
-    for led in range(LED_COUNT):
-        leds.append(0)
+    dbs = []
+    for _ in range(LED_COUNT):
+        dbs.append(0)
 
     while True:
         if not has_pixels:
@@ -85,18 +130,24 @@ def run_fft():
             # 15 -> 315 is the frequency range for most music (deep bass should probably remove the +15)
             led_num = int(led * (300 / LED_COUNT)) + 15
             db = int(ys[led_num] / (20 - (led / (LED_COUNT / 20)) + 1))
-            if db > leds[led]:  # jump up fast
-                leds[led] = db
+            if db > dbs[led]:  # jump up fast
+                dbs[led] = db
             else:  # fade slowly
-                leds[led] = int((leds[led] * 4 + db) / 5)
-            if has_pixels:
-                strip.setPixelColor(led, pixel_wheel(leds[led]))
-            else:
-                screen.fill(rgb_wheel(leds[led]), boxes[led])
-        if has_pixels:
-            strip.show()
-        else:
-            pygame.display.update()
+                dbs[led] = int((dbs[led] * 4 + db) / 5)
+
+        display_fft(dbs)
+
+
+def shutdown():
+    SR.close()
+    if not has_pixels:
+        pygame.quit()
+    sys.exit(0)
+
+
+def signal_handler(signal, frame):
+    print('You pressed Ctrl+C!')
+    shutdown()
 
 
 if __name__ == "__main__":
