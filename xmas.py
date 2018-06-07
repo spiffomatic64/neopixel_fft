@@ -133,7 +133,7 @@ def run_fft():
             if db > dbs[led]:  # jump up fast
                 dbs[led] = db
             else:  # fade slowly
-                dbs[led] = int((dbs[led] * 4 + db) / 5)
+                dbs[led] = int((dbs[led] * 2 + db) / 3)
 
         display_fft(dbs)
 
