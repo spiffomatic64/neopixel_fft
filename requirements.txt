@@ -1,13 +1,6 @@
 -i https://pypi.org/simple
-attrs==18.1.0
-automat==0.6.0
-constantly==15.1.0
-hyperlink==18.0.0
-idna==2.6
-incremental==17.5.0
+jinja2==2.10
+markupsafe==1.0
 numpy==1.14.4
 pyaudio==0.2.11
 pygame==1.9.3
-six==1.11.0
-twisted==18.4.0
-zope.interface==4.5.0

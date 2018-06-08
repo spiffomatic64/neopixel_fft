@@ -5,10 +5,9 @@ from recorder import SwhRecorder
 from jinja2 import Template
 import math
 import time
-from twisted.web import server, resource
-from twisted.internet import reactor
-from twisted.internet.task import LoopingCall
-
+import signal
+from http.server import HTTPServer, BaseHTTPRequestHandler, HTTPStatus
+import selectors
 
 try:
     from neopixel import Adafruit_NeoPixel, Color
@@ -16,6 +15,12 @@ try:
 except:
     has_pixels = False
     import pygame
+
+
+if hasattr(selectors, 'PollSelector'):
+    _ServerSelector = selectors.PollSelector
+else:
+    _ServerSelector = selectors.SelectSelector
 
 
 PORT = 8080
@@ -68,6 +73,7 @@ def shutdown():
     visualization.SR.close()
     if not has_pixels:
         pygame.quit()
+    sys.exit()
 
 
 class Visualization(object):
@@ -125,13 +131,15 @@ class Visualization(object):
             else:  # fade slowly
                 self.dbs[led] = int((self.dbs[led] * 2 + db) / 3)
 
-    def tick(self):
-        if not has_pixels:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    reactor.callFromThread(reactor.stop)
-        self.run_fft()
-        self.display_fft()
+    def loop(self):
+        while True:
+            if not has_pixels:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        shutdown()
+            self.run_fft()
+            self.display_fft()
+            httpd.serve_once()
 
     def write_pixel(self, index, rgb_color):
         if has_pixels:
@@ -151,7 +159,6 @@ class Visualization(object):
             self.write_pixel(led, rgb_color)
 
     def display_color_change_frequency_amplitude(self):
-        print(time.time() - self.start_time)
         time_degrees = int((time.time() - self.start_time) * 45)  # rotate colors in 8 seconds
         colors = (
             int((math.sin(math.radians(time_degrees)) + 1) * 127.5),
@@ -172,7 +179,7 @@ class Visualization(object):
             pygame.display.update()
 
 
-class Server(resource.Resource):
+class Server(BaseHTTPRequestHandler):
     isLeaf = True
 
     def __init__(self, *args, **kwargs):
@@ -180,34 +187,41 @@ class Server(resource.Resource):
             self.index = Template(f.read())
         super(Server, self).__init__(*args, **kwargs)
 
-    def render_GET(self, request):
+    def do_GET(self):
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-type", 'text/html; charset=utf-8')
+        self.end_headers()
         template_args = {
             'visualization_method_choices': Visualization.VISUALIZATION_METHOD_CHOICES,
         }
-        response = bytes(self.index.render(**template_args), 'utf-8')
-        return response
+        self.wfile.write(bytes(self.index.render(**template_args), 'utf-8'))
 
-    def render_POST(self, request):
-        visualization_method = request.args.get(b'visualization_method')
-        if isinstance(visualization_method, list) and len(visualization_method) is 1:
-            visualization_method = str(visualization_method[0], 'utf-8')
-            if visualization_method in Visualization.VISUALIZATION_METHODS:
-                visualization.visualization_method = visualization_method
+    def do_POST(self):
+        visualization_method = str(self.rfile.peek(), 'utf-8').split('=')[-1]
+        if visualization_method in Visualization.VISUALIZATION_METHODS:
+            visualization.visualization_method = visualization_method
 
-        request.redirect(request.path)
-        request.finish()
-        return server.NOT_DONE_YET
+        self.send_response(HTTPStatus.FOUND)
+        self.send_header("Location", self.path)
+        self.end_headers()
 
 
-visualization = Visualization()
-lc = LoopingCall(visualization.tick)
-lc_deferred = lc.start(.001, now=False)
-lc_deferred.addErrback(lambda failure: sys.stderr.write(str(failure)))
-site = server.Site(Server())
-reactor.addSystemEventTrigger('before', 'shutdown', shutdown)
-try:
-    type(reactor.listenTCP(PORT, site))
-    reactor.run()
-except Exception as exp:
-    print('reactor error', exp)
+class CustomHTTPServer(HTTPServer):
+
+    def serve_once(self):
+        with _ServerSelector() as selector:
+            selector.register(self, selectors.EVENT_READ)
+            ready = selector.select(.001)
+            if ready:
+                self._handle_request_noblock()
+
+
+def signal_handler(signal, frame):
+    print('You pressed Ctrl+C')
     shutdown()
+
+
+signal.signal(signal.SIGINT, signal_handler)
+httpd = CustomHTTPServer(("", PORT), Server)
+visualization = Visualization()
+visualization.loop()
