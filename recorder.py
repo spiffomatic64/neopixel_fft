@@ -10,7 +10,7 @@ class SwhRecorder:
         """minimal garb is executed when class is loaded."""
         self.RATE = 48100
         self.BUFFERSIZE = 4024 * 2  # 1024 is a good buffer size
-        self.secToRecord = .2
+        self.secToRecord = .01
         self.threadsDieNow = False
         self.newAudio = False
 
@@ -42,7 +42,9 @@ class SwhRecorder:
     def close(self):
         """cleanly back out and release sound card."""
         self.continuousEnd()
-        self.p.close(self.inStream)
+        self.inStream.stop_stream()
+        self.inStream.close()
+        self.p.terminate()
 
     ### RECORDING AUDIO ###
 
