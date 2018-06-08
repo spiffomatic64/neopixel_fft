@@ -42,7 +42,9 @@ class SwhRecorder:
     def close(self):
         """cleanly back out and release sound card."""
         self.continuousEnd()
-        self.p.close(self.inStream)
+        self.inStream.stop_stream()
+        self.inStream.close()
+        self.p.terminate()
 
     ### RECORDING AUDIO ###
 

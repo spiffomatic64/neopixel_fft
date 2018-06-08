@@ -1,0 +1,14 @@
+<html>
+<body>
+  <form method="POST">
+    {% for option in visualization_method_choices %}
+    <div>
+      <input type="radio" name="visualization_method" value="{{ option[0] }}">{{ option[1] }}</radio>
+    </div>
+    {% endfor %}
+    <div>
+      <input type="submit" value="Submit" />
+    </div>
+  </form>
+</body>
+</html>
