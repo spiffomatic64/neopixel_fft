@@ -12,10 +12,10 @@ Starting with the lower frequencies, going up (in a log-ish mannor) to higher fr
 
 Follow raspberrypi neopixel guide here: https://learn.adafruit.com/neopixels-on-raspberry-pi/software
 
-sudo apt-get install python-matplotlib python-numpy python-scipy python-pyaudio
-
-brew install portaudio
-sudo apt-get install python3-numpy python3-pyaudio
+  sudo apt-get install python-matplotlib python-numpy python-scipy python-pyaudio
+  
+  brew install portaudio
+  sudo apt-get install python3-numpy python3-pyaudio
 
 ## Usage
 
